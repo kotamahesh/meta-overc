@@ -43,6 +43,7 @@ do_install() {
 	install -m644 ${S}/README* ${D}/opt/${BPN}/
 	install -m755 ${S}/overc ${D}/opt/${BPN}/
 	install -m755 ${S}/*.py ${D}/opt/${BPN}/
+	install -m755 ${S}/pre-upgrade.sh ${D}/opt/${BPN}/
 
 	install -m755 ${S}/test/*.sh ${D}/opt/${BPN}/test
 
