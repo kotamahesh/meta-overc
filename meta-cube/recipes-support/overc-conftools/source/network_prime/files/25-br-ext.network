@@ -1,6 +1,0 @@
-[Match]
-Name=br-ext
-
-[Network]
-DHCP=ipv4
-
