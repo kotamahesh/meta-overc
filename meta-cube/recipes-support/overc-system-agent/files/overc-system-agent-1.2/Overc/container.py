@@ -1,4 +1,5 @@
 import sys, os
+import subprocess
 import os.path
 from Overc.utils import Process
 
@@ -20,10 +21,12 @@ class Container(object):
             self.message += "\nActivate ok"
         return retval
 
-    def rollback(self, name, snapshot_name, template):
+    def rollback(self, name, snapshot_name, template, force):
         args = "-R -n %s" % name
         if snapshot_name is not None:
             args += " -b %s" % snapshot_name
+        if force:
+            args += " -f"
         retval = self.run_script(template, args)
         if retval is 0:
             self.message += "\nRollback ok"
@@ -126,6 +129,30 @@ class Container(object):
         else:
             self.message += "\nDelete snapshots failed"
         return retval
+
+    def get_issue(self, name, template):
+        cmd = "cube-cmd"
+        p = subprocess.Popen([cmd,'lxc-attach', '-n', name, 'cat', '/etc/issue'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        issue_s = p.stdout.readline()
+        while p.stdout.readline(): #drain out of the pipe
+            pass
+        return issue_s
+
+    def get_container(self, template):
+        cmd = "cube-cmd"
+        p = subprocess.Popen([cmd,'lxc-ls'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cn=p.stdout.readline()
+        while p.stdout.readline(): #drain out of the pipe
+            pass
+
+        return cn.split()
+
+    def is_active(self, cn, template):
+        args = "-A -n %s" % cn
+        if self.run_script(template, args, True) is 3:
+            return True
+        else:
+            return False
 
     def run_script(self, template, args, failok=False):
         fname = CONTAINER_SCRIPT_PATH + "/" + template

@@ -156,7 +156,6 @@ RDEPENDS_packagegroup-builder-extended = "\
     perl-misc \
     perl-modules \
     perl-pod \
-    pth \
     python \
     python-compiler \
     python-git \
@@ -204,6 +203,5 @@ RDEPENDS_packagegroup-builder-graphics = "\
     libsdl \
     libsdl-dev \
     libx11-dev \
-    python-pygtk \
     gtk-theme-clearlooks \
     "

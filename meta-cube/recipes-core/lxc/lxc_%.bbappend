@@ -6,13 +6,30 @@ PACKAGECONFIG[cgmanager] = "--enable-cgmanager=yes,--enable-cgmanager=no,cgmanag
 
 SYSTEMD_AUTO_ENABLE_${PN}-setup = "enable"
 
+FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+
+SRC_URI += " \
+    file://ovs-up \
+    file://ovs-down \
+    "
+
 do_install_append(){
 	# essential system controls the network, so lxc-net.service is redundant,
 	# remove the dependancy from lxc.service to reduce the boottime.
 
 	sed -i 's/lxc-net.service//g'  ${D}${systemd_unitdir}/system/lxc.service
+	sed -i 's/\(After=.*$\)/\1 openvswitch-nonetwork.service/' ${D}${systemd_unitdir}/system/lxc.service
 
 	# disable the dmesg output on the console when booting the containers,
 	# and this will make the system's boot console clean and reduce the boottime.
-	sed -i  '2a dmesg -D'  ${D}/${libdir}/lxc/lxc/lxc-containers
+	if [ -w ${D}${libdir}/lxc/lxc/lxc-containers ]; then
+	    sed -i  '2a dmesg -D'  ${D}${libdir}/lxc/lxc/lxc-containers
+	else
+	    sed -i  '2a dmesg -D'  ${D}${libexecdir}/lxc/lxc-containers
+	fi
+
+	# allow containers to connect to an OpenVSwitch bridge (br-int)
+	install -d ${D}/etc/lxc/
+	install -m 755 ${WORKDIR}/ovs-up ${D}/etc/lxc/ovs-up
+	install -m 755 ${WORKDIR}/ovs-down ${D}/etc/lxc/ovs-down
 }

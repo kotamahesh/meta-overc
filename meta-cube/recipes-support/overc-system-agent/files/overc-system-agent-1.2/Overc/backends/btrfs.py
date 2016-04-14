@@ -1,4 +1,5 @@
 import sys, os
+import tempfile
 import subprocess
 from Overc.utils  import Utils
 from Overc.utils  import ROOTMOUNT
@@ -107,25 +108,33 @@ class Btrfs(Utils):
             self._btrfs(argv)
 
             #do upgrade
-            os.system('rm -rf /sysroot/%s/etc/mtab' % upgrade_rootfs[self.rootfs])
-            os.system('cp /proc/mounts /sysroot/%s/etc/mtab' % upgrade_rootfs[self.rootfs])
-            os.system('mkdir /sysroot/%s/var/volatile/tmp' % upgrade_rootfs[self.rootfs])
+            os.system('mount -t proc proc /sysroot/%s/proc' % upgrade_rootfs[self.rootfs])
             os.system('mount -o bind /dev /sysroot/%s/dev' % upgrade_rootfs[self.rootfs])
+            os.system('mount --bind /run /sysroot/%s/run' % upgrade_rootfs[self.rootfs])
+
+            tempd = tempfile.mkdtemp(dir='/sysroot/%s/tmp' % upgrade_rootfs[self.rootfs])
+            os.system('cp -r /sysroot/%s/var/lib/rpm/* %s' % (upgrade_rootfs[self.rootfs], tempd))
+            os.system('mount -t tmpfs tmpfs /sysroot/%s/var/lib/rpm' % upgrade_rootfs[self.rootfs])
+            os.system('cp -r %s/* /sysroot/%s/var/lib/rpm/' % (tempd, upgrade_rootfs[self.rootfs]))
+
             result = os.system('chroot /sysroot/%s smart upgrade -y' % upgrade_rootfs[self.rootfs])
+
+            os.system('cp -r /sysroot/%s/var/lib/rpm/* %s/' % (upgrade_rootfs[self.rootfs], tempd))
+            os.system('umount /sysroot/%s/var/lib/rpm' % upgrade_rootfs[self.rootfs])
+            os.system('cp -r %s/* /sysroot/%s/var/lib/rpm/' % (tempd, upgrade_rootfs[self.rootfs]))
+            os.system('rm -rf %s' % tempd)
+
+            os.system('umount /sysroot/%s/run' % upgrade_rootfs[self.rootfs])
+            os.system('umount /sysroot/%s/dev' % upgrade_rootfs[self.rootfs])
+            os.system('umount /sysroot/%s/proc' % upgrade_rootfs[self.rootfs])
 
             if result != 0:
                 self.message = 'Error: System update failed! It has no effect on the running system!'
                 self.message += '\n'
                 self.message += 'Please do not run rollback!'
-                os.system('umount /sysroot/%s/dev' % upgrade_rootfs[self.rootfs])
                 return False
                 # sys.exit(2)
-
-            os.system('rm -rf /sysroot/%s/etc/mtab' % upgrade_rootfs[self.rootfs])
-            os.system('ln -s /proc/mounts /sysroot/%s/etc/mtab' % upgrade_rootfs[self.rootfs])
-            os.system('rm -rf /sysroot/%s/var/volatile/tmp' % upgrade_rootfs[self.rootfs])
-            os.system('umount /sysroot/%s/dev' % upgrade_rootfs[self.rootfs])
-
+            
             upgrade_bzImage = '/sysroot/%s/%s' % (upgrade_rootfs[self.rootfs], self.kernel)
             if os.path.islink(upgrade_bzImage):
                 upgrade_kernel = '/sysroot/%s/%s' % (upgrade_rootfs[self.rootfs], os.path.realpath(upgrade_bzImage))
