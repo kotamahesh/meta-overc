@@ -12,7 +12,6 @@ DEPENDS += "circbuf \
     go-sys \
     go-syslog \
     dockerclient \
-    hcl \
     logutils \
     memberlist \
     raft \
@@ -35,6 +34,7 @@ DEPENDS += "circbuf \
     hashicorp-go-memdb \
     hashicorp-go-reap \
     hashicorp-go-uuid \
+    net-rpc-msgpackrpc \
     "
 
 PKG_NAME = "github.com/hashicorp/consul"
