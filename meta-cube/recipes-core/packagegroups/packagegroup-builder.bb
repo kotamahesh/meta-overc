@@ -155,10 +155,6 @@ RDEPENDS_packagegroup-builder-extended = "\
     perl-misc \
     perl-modules \
     perl-pod \
-    python3-core \
-    python3-modules \
-    python3-misc \
-    python3-git \
     python \
     python-compiler \
     python-git \
