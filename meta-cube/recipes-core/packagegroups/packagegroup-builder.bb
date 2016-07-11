@@ -124,7 +124,6 @@ RDEPENDS_packagegroup-builder-extended = "\
     groff \
     grub \
     gzip \
-    hicolor-icon-theme \
     ifupdown \
     inetutils \
     kernel-image \
@@ -156,6 +155,10 @@ RDEPENDS_packagegroup-builder-extended = "\
     perl-misc \
     perl-modules \
     perl-pod \
+    python3-core \
+    python3-modules \
+    python3-misc \
+    python3-git \
     python \
     python-compiler \
     python-git \
@@ -165,7 +168,6 @@ RDEPENDS_packagegroup-builder-extended = "\
     quota \
     readline \
     rpm \
-    sato-icon-theme \
     setserial \
     smartmontools \
     socat \
@@ -203,5 +205,4 @@ RDEPENDS_packagegroup-builder-graphics = "\
     libsdl \
     libsdl-dev \
     libx11-dev \
-    gtk-theme-clearlooks \
     "
