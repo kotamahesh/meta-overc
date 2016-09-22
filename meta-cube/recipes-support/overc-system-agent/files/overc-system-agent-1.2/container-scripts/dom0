@@ -342,8 +342,8 @@ rpm_upgrade() {
 		echo "Error! smart update failed in container $container"
 		exit 1
 	fi
-	runcmd_in_container $container "smart newer"
-	if [ ! $? -eq 0 ]; then
+	RET=`smart_newer.sh $container | tail -n 1`
+	if [ $RET -le 0 ]; then
 		return 0
 	fi
 
