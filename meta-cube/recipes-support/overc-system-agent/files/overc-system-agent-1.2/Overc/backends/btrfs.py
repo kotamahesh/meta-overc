@@ -134,7 +134,13 @@ class Btrfs(Utils):
         subvolid = self._get_btrfs_value('%s/%s' % (SYSROOT, self.next_rootfs), 'Subvolume ID')
         argv = 'subvolume set-default %s %s' % (subvolid, SYSROOT)
         if not self._btrfs(argv):
-            os.system('cp -rf %s/%s/boot/* /boot/' % (SYSROOT, FACTORY_SNAPSHOT))
+            #rollback kernel
+            self.message += "factory reset kernel %s \n" % self.kernel
+            os.system('cp -rf %s/%s/%s /boot/' % (SYSROOT, FACTORY_SNAPSHOT, self.kernel))
+            #if grub-efi exists, factory-reset it too
+            if os.path.exists('%s/%s/boot/efi/EFI/BOOT' % (SYSROOT, FACTORY_SNAPSHOT)):
+                self.message += "factory reset grub-efi related files \n"
+                os.system('cp -rf %s/%s/boot/efi/EFI/BOOT/*efi /boot/EFI/BOOT/' % (SYSROOT, FACTORY_SNAPSHOT))
             return True
         else:
             self.message += "Cannot set default mount subvolume to %s" % self.next_rootfs
@@ -261,6 +267,11 @@ class Btrfs(Utils):
                 os.system('cp -f %s  %s_bakup' % (self.kernel, self.kernel))
                 os.system('cp -f %s %s' % (upgrade_kernel, self.kernel))
 
+            #if grub-efi exists, replace the old one with it
+            if os.path.exists('%s/%s/boot/efi/EFI/BOOT' % (SYSROOT, self.next_rootfs)):
+                self.message += "Replace the grub-efi related files with the latest one \n"
+                os.system('cp -rf %s/%s/boot/efi/EFI/BOOT/*efi /boot/EFI/BOOT/' % (SYSROOT, self.next_rootfs))
+
             #setup default subvolume
             upgrade_subvolid = self._get_btrfs_value('%s/%s' % (SYSROOT, self.next_rootfs), 'Subvolume ID')
             argv = 'subvolume set-default %s %s' % (upgrade_subvolid, SYSROOT)
@@ -301,6 +312,11 @@ class Btrfs(Utils):
 
         if rollback_kernel_md5 != self.kernel_md5:
             os.system('cp -f %s %s' % (rollback_kernel, self.kernel))
+
+        #if grub-efi exists, rollback it too
+        if os.path.exists('%s/%s/boot/efi/EFI/BOOT' % (SYSROOT, self.next_rootfs)):
+            self.message += "Rollback grub-efi related files \n"
+            os.system('cp -rf %s/%s/boot/efi/EFI/BOOT/*efi /boot/EFI/BOOT/' % (SYSROOT, self.next_rootfs))
 
         #setup default subvolume
         rollback_subvolid = self._get_btrfs_value('%s/%s' % (SYSROOT, self.next_rootfs), 'Subvolume ID')
