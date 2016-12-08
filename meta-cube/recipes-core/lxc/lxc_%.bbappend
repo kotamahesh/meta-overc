@@ -18,6 +18,7 @@ SRC_URI += " \
     file://overlaycreate \
     file://silence_no_escape_lxc-console.patch \
     file://read-write-file-handles-after-EPOLLHUP.patch \
+    file://lxc-confile-support-the-network-link-string-pattern-matc.patch \
     "
 
 do_install_append(){
