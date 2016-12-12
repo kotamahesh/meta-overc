@@ -74,11 +74,6 @@ class network_prime
     source => 'puppet:///modules/network_prime/overc-network-prime-port-forward.service',
     before => File['overc-network-prime-port-forward.service.link'],
   }
-  file { 'autonetdev':
-    path => "/var/lib/lxc/$container/autonetdev",
-    source => 'puppet:///modules/network_prime/autonetdev',
-    before => File['overc-network-prime.service.link'],
-  }
   file { 'overc-network-prime-port-forward.service.link':
     ensure => 'link',
     target => "../overc-network-prime-port-forward.service",

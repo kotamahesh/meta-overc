@@ -26,7 +26,6 @@ SRC_URI = " \
     file://source/network_prime/files/25-br-int.network.essential \
     file://source/network_prime/files/overc-network-prime.service \
     file://source/network_prime/files/overc-network-prime-port-forward.service \
-    file://source/network_prime/files/autonetdev \
     file://source/network_prime/manifests/init.pp \
     file://source/network_prime/templates/network_prime.sh.erb \
     file://source/network_prime/templates/network_prime_port_forward.sh.erb \
@@ -41,8 +40,6 @@ do_install() {
                    ${D}/${sysconfdir}/puppet/modules/network_prime/manifests/
 
     install -d ${D}/${sysconfdir}/puppet/modules/network_prime/files
-    install -m 755 ${WORKDIR}/source/network_prime/files/autonetdev \
-        ${D}/${sysconfdir}/puppet/modules/network_prime/files/
     for file in overc-network-prime.service \
                 overc-network-prime-port-forward.service \
                 20-br-int-virt.network 25-br-int.network \
