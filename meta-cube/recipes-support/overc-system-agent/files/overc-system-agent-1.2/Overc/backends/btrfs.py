@@ -233,8 +233,8 @@ class Btrfs(Utils):
             os.system('mount -o bind /dev %s/%s/dev' % (SYSROOT, self.next_rootfs))
             os.system('mount --bind /run %s/%s/run' % (SYSROOT, self.next_rootfs))
 
-            tempd = tempfile.mkdtemp(dir='%s/%s/tmp' % (SYSROOT, self.next_rootfs))
-            os.system('cp -r %s/%s/var/lib/rpm/* %s' % (SYSROOT, self.next_rootfs, tempd))
+            tempd = tempfile.mkdtemp(dir='%s/%s/opt' % (SYSROOT, self.next_rootfs))
+            os.system('cp -r %s/%s/var/lib/rpm/* %s/' % (SYSROOT, self.next_rootfs, tempd))
             os.system('mount -t tmpfs tmpfs %s/%s/var/lib/rpm' % (SYSROOT, self.next_rootfs))
             os.system('cp -r %s/* %s/%s/var/lib/rpm/' % (tempd, SYSROOT, self.next_rootfs))
 
