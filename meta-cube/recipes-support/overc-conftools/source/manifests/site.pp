@@ -20,18 +20,19 @@ if $configure_network_prime == true {
   }
   # Used to ensure networking 'restart' happens after configuration.
   $networking_require = [ Class["::network_prime"] ]
-}
 
-# The overc-conftools service runs after the network.target
-# but may contain networking modifications, so restart the
-# systemd-networkd to ensure these changes take effect.
-exec { 'restart-networking':
-  command => '/bin/systemctl restart systemd-networkd',
-  before => Exec['restart-dnsmasq'],
-  require => $networking_require,
-}
-exec { 'restart-dnsmasq':
-  command => '/bin/systemctl restart dnsmasq',
+
+  # The overc-conftools service runs after the network.target
+  # but may contain networking modifications, so restart the
+  # systemd-networkd to ensure these changes take effect.
+  exec { 'restart-networking':
+    command => '/bin/systemctl restart systemd-networkd',
+    before => Exec['restart-dnsmasq'],
+    require => $networking_require,
+  }
+  exec { 'restart-dnsmasq':
+    command => '/bin/systemctl restart dnsmasq',
+  }
 }
 
 exec {
