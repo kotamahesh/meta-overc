@@ -153,13 +153,23 @@ class Btrfs(Utils):
             return False
    
     def _mount_container_root(self):
+        if not os.path.exists(CONTAINER_MOUNT): #doesn't have containers, thus return directly
+            return False
+
         if not os.path.exists('%s/.tmp' % CONTAINER_MOUNT):
             os.mkdir('%s/.tmp' % CONTAINER_MOUNT)
+
         devpath = self._getrootdev(CONTAINER_MOUNT)
-        os.system('mount -o subvolid=5 %s %s/.tmp' % (devpath, CONTAINER_MOUNT))
+        if not devpath:
+            os.system('mount -o subvolid=5 %s %s/.tmp' % (devpath, CONTAINER_MOUNT))
+            return True
+        else:
+            return False
 
     def _factory_reset_container(self):
-        self._mount_container_root()
+        if not self._mount_container_root(): #doesn't have containers, thus return directly
+            return True
+
         if not os.path.exists('%s/.tmp/%s' % (CONTAINER_MOUNT, FACTORY_SNAPSHOT)):
             self.message += 'Error: Cannot find the snapshot of factory in %s/.tmp' % CONTAINER_MOUNT
             self.message += '\n'

@@ -1,10 +1,11 @@
 import sys, os
 import subprocess
 import select
+import commands
 import random
 import string
 
-ROOTMOUNT = "/essential"
+ROOTMOUNT = ""
 SYSROOT = "/sysroot"
 HOSTPID = "/host/proc/1"
 FACTORY_SNAPSHOT = ".factory"
@@ -25,6 +26,13 @@ class Utils(object):
         assert stat is None
         return res, stat
 
+    def in_container(self):
+        status, output = commands.getstatusoutput('systemd-detect-virt -c')
+        if output != 'none':
+            return True
+        else:
+            return False
+
     def _compute_checksum(self, filename):
         """Computes the MD5 checksum of the contents of a file.
         filename: string
@@ -34,8 +42,10 @@ class Utils(object):
 
     def _nsenter(self, pid, args):
         cmd = []
-        cmd.append("nsenter -t %s" % pid)
-        cmd.append("-n -m -i --")
+        if self.in_container():
+            cmd.append("nsenter -t %s" % pid)
+            cmd.append("-n -m -i --")
+
         cmd.append(args)
         cmd_s = ' '.join(cmd)
         process = Process()
@@ -45,7 +55,13 @@ class Utils(object):
 
     def _random_str(self, size=6, chars=string.ascii_uppercase + string.digits):
         return ''.join(random.choice(chars) for _ in range(size))
-        
+
+utils = Utils()
+if utils.in_container():
+    ROOTMOUNT = "/essential"
+else:
+    ROOTMOUNT = "/"
+
 class Process(object):
     def __init__(self):
         self.stdout = ''

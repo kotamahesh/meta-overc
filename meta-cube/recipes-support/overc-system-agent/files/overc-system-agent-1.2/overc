@@ -25,6 +25,7 @@ import argparse
 import gettext
 import subprocess
 import Overc
+from Overc.utils import Utils
 
 PROGNAME="overc"
 gettext.bindtextdomain(PROGNAME, "/usr/share/locale")
@@ -52,7 +53,9 @@ if __name__ == '__main__':
     parser = HelpByDefaultArgumentParser(description=overc.help())
     subparser = parser.add_subparsers(help=_("commands"))
 
-    if os.path.exists("/usr/bin/smart"):
+    utils = Utils()
+
+    if os.path.exists("/usr/bin/smart") and utils.in_container():
 	systemp = subparser.add_parser("system",help=_("execute OverC system commands"))
 	system_subparse = systemp.add_subparsers(help=_("system commands"))
 	s_upgradep = system_subparse.add_parser("upgrade", help=_("upgrade to the latest whole system, including host and containers"))
@@ -102,85 +105,96 @@ if __name__ == '__main__':
         newerp = host_subparser.add_parser("newer", help=_("shows packages that have available upgrades."))
         newerp.set_defaults(func=overc.host_newer)
 
+        container = subparser.add_parser("container",help=_("execute OverC container commands"))
+        container_subparser = container.add_subparsers(help=_("container commands"))
 
+        c_rollback = container_subparser.add_parser("rollback", help=_("rollback container upgrade"))
+        c_rollback.set_defaults(func=overc.container_rollback)
+        c_rollback.add_argument('name', help="name of container")
+        c_rollback.add_argument('template', help="template of container")
+        c_rollback.add_argument('snapshot_name', nargs='?', help="name of snapshot")
 
+        c_list_containers = container_subparser.add_parser("list_containers", help=_("list containers available"))
+        c_list_containers.set_defaults(func=overc.container_list)
+        c_list_containers.add_argument('template', help="template of container")
 
-    container = subparser.add_parser("container",help=_("execute OverC container commands"))
-    container_subparser = container.add_subparsers(help=_("container commands"))
+        c_list_snapshots = container_subparser.add_parser("list_snapshots", help=_("list snapshots available for container"))
+        c_list_snapshots.set_defaults(func=overc.container_snapshot_list)
+        c_list_snapshots.add_argument('name', help="name of container")
+        c_list_snapshots.add_argument('template', help="template of container")
 
-    c_rollback = container_subparser.add_parser("rollback", help=_("rollback container upgrade"))
-    c_rollback.set_defaults(func=overc.container_rollback)
-    c_rollback.add_argument('name', help="name of container")
-    c_rollback.add_argument('template', help="template of container")
-    c_rollback.add_argument('snapshot_name', nargs='?', help="name of snapshot")
+        c_update = container_subparser.add_parser("update", help=_("update to the latest available"))
+        c_update.set_defaults(func=overc.container_update)
+        c_update.add_argument('template', help="template of container")
 
-    c_list_containers = container_subparser.add_parser("list_containers", help=_("list containers available"))
-    c_list_containers.set_defaults(func=overc.container_list)
-    c_list_containers.add_argument('template', help="template of container")
+        c_send_image = container_subparser.add_parser("send_image", help=_("send container image for template"))
+        c_send_image.set_defaults(func=overc.container_send_image)
+        c_send_image.add_argument('image_url', help="location of image")
+        c_send_image.add_argument('template', help="template of container")
 
-    c_list_snapshots = container_subparser.add_parser("list_snapshots", help=_("list snapshots available for container"))
-    c_list_snapshots.set_defaults(func=overc.container_snapshot_list)
-    c_list_snapshots.add_argument('name', help="name of container")
-    c_list_snapshots.add_argument('template', help="template of container")
+        c_snapshot = container_subparser.add_parser("snapshot", help=_("snapshot for an available container"))
+        c_snapshot.set_defaults(func=overc.container_snapshot)
+        c_snapshot.add_argument('name', help="name of container")
+        c_snapshot.add_argument('template', help="template of container")
 
-    c_update = container_subparser.add_parser("update", help=_("update to the latest available"))
-    c_update.set_defaults(func=overc.container_update)
-    c_update.add_argument('template', help="template of container")
-
-    c_send_image = container_subparser.add_parser("send_image", help=_("send container image for template"))
-    c_send_image.set_defaults(func=overc.container_send_image)
-    c_send_image.add_argument('image_url', help="location of image")
-    c_send_image.add_argument('template', help="template of container")
-
-    c_snapshot = container_subparser.add_parser("snapshot", help=_("snapshot for an available container"))
-    c_snapshot.set_defaults(func=overc.container_snapshot)
-    c_snapshot.add_argument('name', help="name of container")
-    c_snapshot.add_argument('template', help="template of container")
-
-    c_upgrade = container_subparser.add_parser("upgrade", help=_("upgrade container to the latest available"))
-    c_upgrade.set_defaults(func=overc.container_upgrade)
-    c_upgrade.add_argument('name', nargs="?", help="name of container")
-    c_upgrade.add_argument('template', help="template of container")
-    c_upgrade.add_argument("-r", "--rpm", dest="rpm", action="store_true", help=_("Upgrade container using rpm feeds"))
-    c_upgrade.add_argument("-i", "--image", dest="image", action="store_true", help=_("Upgrade container using images"))
-    c_upgrade.add_argument("-S", "--skipdel", dest="skip_del",
+        c_upgrade = container_subparser.add_parser("upgrade", help=_("upgrade container to the latest available"))
+        c_upgrade.set_defaults(func=overc.container_upgrade)
+        c_upgrade.add_argument('name', nargs="?", help="name of container")
+        c_upgrade.add_argument('template', help="template of container")
+        c_upgrade.add_argument("-r", "--rpm", dest="rpm", action="store_true", help=_("Upgrade container using rpm feeds"))
+        c_upgrade.add_argument("-i", "--image", dest="image", action="store_true", help=_("Upgrade container using images"))
+        c_upgrade.add_argument("-S", "--skipdel", dest="skip_del",
                            action="store_true",
                            help=_("don't delete all of the container's history snapshots before upgrading it"))
 
-    c_activate = container_subparser.add_parser("activate", help=_("activate container"))
-    c_activate.set_defaults(func=overc.container_activate)
-    c_activate.add_argument('name', help="name of container")
-    c_activate.add_argument('template', help="template of container")
-    c_activate.add_argument('-f', '--force', dest="force", action="store_true", help=_("stops container if it's active"))
+        c_activate = container_subparser.add_parser("activate", help=_("activate container"))
+        c_activate.set_defaults(func=overc.container_activate)
+        c_activate.add_argument('name', help="name of container")
+        c_activate.add_argument('template', help="template of container")
+        c_activate.add_argument('-f', '--force', dest="force", action="store_true", help=_("stops container if it's active"))
 
-    c_start = container_subparser.add_parser("start", help=_("start container"))
-    c_start.set_defaults(func=overc.container_start)
-    c_start.add_argument('name', help="name of container")
-    c_start.add_argument('template', help="template of container")
+        c_start = container_subparser.add_parser("start", help=_("start container"))
+        c_start.set_defaults(func=overc.container_start)
+        c_start.add_argument('name', help="name of container")
+        c_start.add_argument('template', help="template of container")
 
-    c_stop = container_subparser.add_parser("stop", help=_("stop container"))
-    c_stop.set_defaults(func=overc.container_stop)
-    c_stop.add_argument('name', help="name of container")
-    c_stop.add_argument('template', help="template of container")
+        c_stop = container_subparser.add_parser("stop", help=_("stop container"))
+        c_stop.set_defaults(func=overc.container_stop)
+        c_stop.add_argument('name', help="name of container")
+        c_stop.add_argument('template', help="template of container")
 
-    c_delete = container_subparser.add_parser("delete", help=_("delete container"))
-    c_delete.set_defaults(func=overc.container_delete)
-    c_delete.add_argument('name', help="name of container")
-    c_delete.add_argument('template', help="template of container")
-    c_delete.add_argument('-f', '--force', dest="force", action="store_true", help=_("stops container if it's active"))
+        c_delete = container_subparser.add_parser("delete", help=_("delete container"))
+        c_delete.set_defaults(func=overc.container_delete)
+        c_delete.add_argument('name', help="name of container")
+        c_delete.add_argument('template', help="template of container")
+        c_delete.add_argument('-f', '--force', dest="force", action="store_true", help=_("stops container if it's active"))
 
-    c_delete_snapshots = container_subparser.add_parser("delete_snapshots", help=_("delete all snapshots of a container"))
-    c_delete_snapshots.set_defaults(func=overc.container_delete_snapshots)
-    c_delete_snapshots.add_argument('name', help="name of container")
-    c_delete_snapshots.add_argument('template', help="template of container")
+        c_delete_snapshots = container_subparser.add_parser("delete_snapshots", help=_("delete all snapshots of a container"))
+        c_delete_snapshots.set_defaults(func=overc.container_delete_snapshots)
+        c_delete_snapshots.add_argument('name', help="name of container")
+        c_delete_snapshots.add_argument('template', help="template of container")
 
-    c_overlay = container_subparser.add_parser("overlay", help=_("manager overlay dir in container"))
-    c_overlay.set_defaults(func=overc.container_overlay)
-    c_overlay.add_argument('name', help="name of container")
-    c_overlay.add_argument('--stop', dest="olstop", action="store_true", help=_("stop overlay"))
-    c_overlay.add_argument('--dir', dest="oldir", help=_("overlay directories"))
-    c_overlay.add_argument('--source', dest="olsource", help=_("overlay source"))
-    c_overlay.add_argument('--list', dest="ollist", action="store_true", help=_("list directories with overlay"))
+        c_overlay = container_subparser.add_parser("overlay", help=_("manager overlay dir in container"))
+        c_overlay.set_defaults(func=overc.container_overlay)
+        c_overlay.add_argument('name', help="name of container")
+        c_overlay.add_argument('--stop', dest="olstop", action="store_true", help=_("stop overlay"))
+        c_overlay.add_argument('--dir', dest="oldir", help=_("overlay directories"))
+        c_overlay.add_argument('--source', dest="olsource", help=_("overlay source"))
+        c_overlay.add_argument('--list', dest="ollist", action="store_true", help=_("list directories with overlay"))
+    
+    elif os.path.exists("/usr/bin/smart") and not utils.in_container():
+        system_upgrade = subparser.add_parser("upgrade",help=_("upgrade the system"))
+	system_upgrade.set_defaults(func=overc.host_upgrade)
+	system_upgrade.add_argument("-r", "--reboot", dest="reboot", action="store_true",
+                               		 help=_("if an upgrade is available, reboot after deployment is complete"))
+	system_upgrade.add_argument("-f", "--force", dest="force", action="store_true",
+					help=_("do system backup and upgrade even the system is up to date"))
+
+	system_rollback = subparser.add_parser("rollback",help=_("rollback the system to the status before do upgrade"))
+	system_rollback.set_defaults(func=overc.host_rollback)
+
+	system_factory_reset = subparser.add_parser("factory-reset",help=_("Reset your system to factory settings"))
+	system_factory_reset.set_defaults(func=overc.factory_reset)
 
     try:
         args = parser.parse_args()
