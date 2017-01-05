@@ -167,7 +167,7 @@ class Btrfs(Utils):
             return False
 
     def _factory_reset_container(self):
-        if not self._mount_container_root(): #doesn't have containers, thus return directly
+        if not self.in_container(): #doesn't be in container dom0, thus return directly
             return True
 
         if not os.path.exists('%s/.tmp/%s' % (CONTAINER_MOUNT, FACTORY_SNAPSHOT)):
