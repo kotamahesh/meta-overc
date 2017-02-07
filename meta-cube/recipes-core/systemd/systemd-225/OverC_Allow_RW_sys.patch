@@ -1,0 +1,34 @@
+Allow /sys to be RW for a priveleged container.
+
+In order to make this work properly the systemd's device mechanism
+needs to be turned off as if /sys was RO.
+
+
+
+---
+ src/core/device.c |   12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+--- a/src/core/device.c
++++ b/src/core/device.c
+@@ -774,9 +774,19 @@ static bool device_supported(void) {
+         /* If /sys is read-only we don't support device units, and any
+          * attempts to start one should fail immediately. */
+ 
+-        if (read_only < 0)
++        if (read_only < 0) {
+                 read_only = path_is_read_only_fs("/sys");
+ 
++                /* Secondardy check against container */
++                if (!read_only) {
++                        const char *c;
++
++                        c = getenv("container");
++                        if (!isempty(c))
++                                read_only = 1;
++                }
++       }
++
+         return read_only <= 0;
+ }
+ 
