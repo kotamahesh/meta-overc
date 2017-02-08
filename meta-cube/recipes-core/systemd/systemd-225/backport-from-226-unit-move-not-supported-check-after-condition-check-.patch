@@ -1,0 +1,47 @@
+From d11a76451f21dbec5dcc0d65444b76124764d3b5 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Mon, 7 Sep 2015 14:08:24 +0200
+Subject: [PATCH] unit: move "not supported" check after condition check in
+ unit_start()
+
+Make sure we always check conditions before checking whether the unit
+type is supported in unit_start(), since condition checks are "clean
+errors", while "not supported" errors are fatal.
+
+This cleans up the boot output of systemd in containers, where a lot of
+NOTSUPP lines were shown befor this fix.
+
+This partially reverts 8ff4d2ab0d4758e914aea6d86154d85f2b2c787f which
+reorder the checks.
+---
+ src/core/unit.c |   12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
+
+--- a/src/core/unit.c
++++ b/src/core/unit.c
+@@ -1445,6 +1445,15 @@ int unit_start(Unit *u) {
+                 return -EPROTO;
+         }
+ 
++        /* Units of types that aren't supported cannot be
++         * started. Note that we do this test only after the condition
++         * checks, so that we rather return condition check errors
++         * (which are usually not considered a true failure) than "not
++         * supported" errors (which are considered a failure).
++         */
++        if (!unit_supported(u))
++                return -EOPNOTSUPP;
++
+         /* Forward to the main object, if we aren't it. */
+         following = unit_following(u);
+         if (following) {
+@@ -1452,9 +1461,6 @@ int unit_start(Unit *u) {
+                 return unit_start(following);
+         }
+ 
+-        if (!unit_supported(u))
+-                return -EOPNOTSUPP;
+-
+         /* If it is stopped, but we cannot start it, then fail */
+         if (!UNIT_VTABLE(u)->start)
+                 return -EBADR;
