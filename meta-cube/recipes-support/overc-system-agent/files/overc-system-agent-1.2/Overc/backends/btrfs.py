@@ -160,7 +160,7 @@ class Btrfs(Utils):
             os.mkdir('%s/.tmp' % CONTAINER_MOUNT)
 
         devpath = self._getrootdev(CONTAINER_MOUNT)
-        if not devpath:
+        if devpath:
             os.system('mount -o subvolid=5 %s %s/.tmp' % (devpath, CONTAINER_MOUNT))
             return True
         else:
@@ -168,6 +168,8 @@ class Btrfs(Utils):
 
     def _factory_reset_container(self):
         if not self.in_container(): #doesn't be in container dom0, thus return directly
+            return True
+        elif not self._mount_container_root():
             return True
 
         if not os.path.exists('%s/.tmp/%s' % (CONTAINER_MOUNT, FACTORY_SNAPSHOT)):
