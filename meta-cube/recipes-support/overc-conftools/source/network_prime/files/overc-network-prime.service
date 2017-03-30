@@ -5,7 +5,7 @@ Before=systemd-networkd.service
 
 [Service]
 Type=oneshot
-ExecStart=/etc/overc/network_prime.sh
+ExecStart=/bin/bash /etc/overc/network_prime.sh
 
 [Install]
 WantedBy=multi-user.target
