@@ -52,6 +52,7 @@ RDEPENDS_packagegroup-dom0-python = " \
     "
 
 RDEPENDS_packagegroup-dom0-extended = "\
+     libcgroup \
      ${OVERC_COMMON_EXTENDED} \
      ${OVERC_EXTRA_EXTENDED} \
     "

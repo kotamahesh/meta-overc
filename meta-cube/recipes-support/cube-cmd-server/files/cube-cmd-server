@@ -93,6 +93,13 @@ function console_listener() {
 	fi
     done
 
+    CGEXEC=""
+    if [ -f /usr/bin/cgexec ] ; then
+	# If cgexec helper is there use it to create
+	# a console instance that lives across a systemd cube-cmd-server restart
+	CGEXEC="/usr/bin/cgexec -g *:/"
+    fi
+
     if [ -n "$matches" ]; then
 	for m in $matches; do
 	    cname=`echo "$m" | cut -d/ -f5`
@@ -135,16 +142,16 @@ function console_listener() {
 		    # send the number of the console to the caller
 		    /usr/bin/dtach -N /opt/container/${cname}/cmd-output -r none -w -W 5 echo -n ${console_file}
 		    # exec the console command .. or proxy
-		    /usr/bin/dtach -N /opt/container/${cname}/${console_file} -r none -w -W 5 -Q ${cmd}
+		    $CGEXEC /usr/bin/dtach -n /opt/container/${cname}/${console_file} -r none -w -W 5 -Q ${cmd}
 		fi
 		if [ "${type}" = "namespace" ]; then
 		    if [ "${connectorname}" == "dom0" ]; then
 			# namespace enter!
 			if [ -n "$target" ]; then
 			    /usr/bin/dtach -N /opt/container/${cname}/cmd-output -r none -w -W 5 echo -n ${console_file}
-			    /usr/bin/dtach -N /opt/container/${cname}/${console_file} -r none -w -W 5 -Q lxc-attach -n ${target} /bin/sh
+			    $CGEXEC /usr/bin/dtach -n /opt/container/${cname}/${console_file} -r none -w -W 5 -Q lxc-attach -n ${target} /bin/sh
 			else
-			    do_error "[ERROR]: namespace consoles require a target container"
+			    do_error ${requestor} "[ERROR]: namespace consoles require a target container"
 			    output_and_log_msg "[ERROR]: namespace consoles require a target container"
 			fi
 		    else
@@ -152,7 +159,7 @@ function console_listener() {
 			# send the number of the console to the caller
 			/usr/bin/dtach -N /opt/container/${cname}/cmd-output -r none -w -W 5 echo -n ${console_file}
 			# exec the console command .. or proxy
-			/usr/bin/dtach -N /opt/container/${cname}/${console_file} -r none -w -W 5 -Q ${cmd}
+			$CGEXEC /usr/bin/dtach -n /opt/container/${cname}/${console_file} -r none -w -W 5 -Q ${cmd}
                    fi
 		fi
 	    ) &
