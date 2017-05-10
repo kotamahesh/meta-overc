@@ -158,7 +158,7 @@ function console_listener() {
 	    ) &
 	done
     else
-	do_error "[ERROR]: no requestor matching ${connectorname} found, no console created"
+	do_error ${requestor} "[ERROR]: no requestor matching ${connectorname} found, no console created"
 	output_and_log_msg "[ERROR]: no requestor matching ${connectorname} found, no console created"
     fi
 }
@@ -180,6 +180,8 @@ function do_command()
 
 function do_error()
 {
+    local cname=$1
+    shift
     local message="$@"
 
     # We run this within dtach to allow for ptys, pipes, etc, to be used
@@ -353,7 +355,7 @@ while (true) do
 		    fi
 		    do_command ${requestor} ${line[@]}
 		else
-		    do_error "ERROR: requestor ($requestor) is not allowed to host commands"
+		    do_error ${requestor} "ERROR: requestor ($requestor) is not allowed to host commands"
 		    output_and_log_msg "[INFO]: requestor ($requestor) is not allowed to issue host commands"
 		fi
 		;;
@@ -382,7 +384,7 @@ while (true) do
 		    if [ -n "${cmd_allowed}" ]; then
 			do_command ${requestor} $line
 		    else
-			do_error "ERROR: cube is not allowed to issue this command"
+			do_error ${requestor} "ERROR: cube is not allowed to issue this command"
 			output_and_log_msg "[INFO]: requestor ($requestor) is not allowed to issue lxc commands"
 		    fi
 		fi
@@ -407,7 +409,7 @@ while (true) do
 			output_and_log_msg "[INFO]: a valid target container is required"
 		    fi
 		else
-		    do_error "ERROR: cube is not allowed direct console access. log into dom0 first."
+		    do_error ${requestor} "ERROR: cube is not allowed direct console access. log into dom0 first."
 		    output_and_log_msg "[INFO]: requestor ($requestor) is not allowed to issue nsenter"
 		fi
 		;;
@@ -420,7 +422,7 @@ while (true) do
 		if [ -n "${target}" ]; then
 		    console_listener ${whoami} ${requestor} console ${target}
 		else
-		    do_error "ERROR: cube unknown target cube"
+		    do_error ${requestor} "ERROR: cube unknown target cube"
 		    output_and_log_msg "[INFO]: a valid target container is required"
 		fi
 		;;
@@ -444,7 +446,7 @@ while (true) do
 			    ;;
 		    esac
 		else
-		    do_error "ERROR: requestor ($requestor) is not allowed to issue shutdown"
+		    do_error ${requestor} "ERROR: requestor ($requestor) is not allowed to issue shutdown"
 		    output_and_log_msg "[INFO]: requestor ($requestor) is not allowed to issue shutdown"
 		fi
 		;;
@@ -468,7 +470,7 @@ while (true) do
 			    ;;
 		    esac
 		else
-		    do_error "ERROR: requestor ($requestor) is not allowed to issue reboot"
+		    do_error ${requestor} "ERROR: requestor ($requestor) is not allowed to issue reboot"
 		    output_and_log_msg "[INFO]: requestor ($requestor) is not allowed to issue reboot"
 		fi
 		;;
