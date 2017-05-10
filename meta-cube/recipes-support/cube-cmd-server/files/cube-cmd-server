@@ -484,9 +484,7 @@ while (true) do
 		if [ $? -eq 0 ]; then
 		    output_and_log_msg "[INFO]: issuing cmd-server-restart for $requestor"
 		    # dump a message and then flee
-		    if [ -p "/opt/container/${requestor}/cmd-output" ]; then
-			/usr/bin/dtach -N /opt/container/${cname}/cmd-output -r none -w -W 5 echo -n "cmd-server restarting"
-		    fi
+		    do_command ${requestor} echo 'cmd-server restarting'
 		    # clean exit, so systemd will restart us
 		    break
 		fi
