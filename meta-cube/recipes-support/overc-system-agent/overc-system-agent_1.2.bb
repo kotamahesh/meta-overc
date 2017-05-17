@@ -34,7 +34,9 @@ do_install() {
 	install -d ${D}/opt/${BPN}/Overc/backends
 	install -d ${D}/opt/${BPN}/container-scripts
 	install -d ${D}/opt/${BPN}/test
+	install -d ${D}/${base_bindir}
 
+	install -m 0755 ${S}/lxc-overlayscan ${D}/${base_bindir}/
 	install -m755 ${S}/container-scripts/* ${D}/opt/${BPN}/container-scripts
 
 	install -m644 ${S}/Overc/*.py ${D}/opt/${BPN}/Overc/
@@ -59,5 +61,6 @@ do_install() {
 
 FILES_${PN} += "/opt/${BPN} ${sysconfdir}/overc \
                 ${base_libdir}/systemd \
+		${base_bindir} \
 	      "
 

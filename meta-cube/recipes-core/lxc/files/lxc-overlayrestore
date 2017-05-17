@@ -1,4 +1,10 @@
 #!/bin/sh -
 
-# Rebuild an overlay-ed directory
-# Or turn an overlay-ed directroy into orignal state
+# Delete duplicated file first
+if [ -f /var/lib/lxc/dellist ]; then
+    for line in `cat /var/lib/lxc/dellist`
+    do
+        rm -rf $line
+    done
+    rm /var/lib/lxc/dellist
+fi

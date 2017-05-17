@@ -6,6 +6,7 @@ from Overc.utils import Utils
 from Overc.utils import ROOTMOUNT
 from Overc.utils import HOSTPID
 from Overc.utils  import SYSROOT
+from Overc.utils import Process
 
 def Is_btrfs():
     return not os.system('btrfs subvolume show %s >/dev/null 2>&1' % ROOTMOUNT)
@@ -79,22 +80,9 @@ class Overc(object):
         rc = self._host_upgrade(0, force)
 
         if ((overlay_flag == 1) and (skipscan == 0) and (rc == 1)):
-            # Enable lxc-overlay service in essential
-            lxcfile = '%s/%s/lib/systemd/system/lxc.service' % (SYSROOT, self.agency.next_rootfs)
-            lxc = open(lxcfile, 'r')
-            lines = lxc.readlines()
-            lxc.close()
-            for line in lines:
-                if line.find("lxc_overlay") != -1:
-                    sys.exit(self.retval)
-            for line in lines:
-                if line.find("ExecStart") != -1:
-                    index = lines.index(line)
-                    break
-            lines.insert(index, "ExecStartPre=/etc/lxc/lxc-overlayscan\n")
-            lxc = open(lxcfile, 'w')
-            lxc.writelines(lines)
-            lxc.close()
+		cmd = "lxc-overlayscan %s/%s" % (SYSROOT, self.agency.next_rootfs)
+		process = Process()
+		retval = process.run(cmd)
 
         if ((rc == 1) and (reboot != 0)):
             self.message += "\nrebooting..."
