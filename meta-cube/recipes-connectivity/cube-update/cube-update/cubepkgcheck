@@ -13,6 +13,7 @@ function updatepkg_info()
     
     echo "CUBEUPDATE: " >> /tmp/$$.motd
     echo "CUBEUPDATE: update packages information on `date`" > /etc/cube-update/network.log
+    echo "CUBEUPDATE: update packages information on `date`" >> /tmp/$$.motd
     for cn in $CNList; do
         RET=`smart_newer.sh $cn | tail -n 1`
 	if [ X"$RET" == X"-1" ]; then
