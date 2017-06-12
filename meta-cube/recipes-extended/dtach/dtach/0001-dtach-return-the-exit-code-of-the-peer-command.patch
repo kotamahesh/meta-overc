@@ -1,0 +1,95 @@
+From 56e3f4541dcf78eb2b1defac618e1aa733934505 Mon Sep 17 00:00:00 2001
+From: fli <fupan.li@windriver.com>
+Date: Sun, 11 Jun 2017 18:37:53 -0700
+Subject: [PATCH] dtach: return the exit code of the peer command
+
+Signed-off-by: fli <fupan.li@windriver.com>
+---
+ attach.c | 13 +++++++++++--
+ dtach.h  |  2 ++
+ master.c | 11 +++++++++++
+ 3 files changed, 24 insertions(+), 2 deletions(-)
+
+diff --git a/attach.c b/attach.c
+index 8b39e34..7b90d1b 100644
+--- a/attach.c
++++ b/attach.c
+@@ -155,6 +155,7 @@ attach_main(int noerror)
+ 	fd_set readfds_src;
+ 	fd_set readfds;
+ 	int s;
++	char exitcode;
+ 
+ 	/* Attempt to open the socket. Don't display an error if noerror is 
+ 	** set. */
+@@ -262,7 +263,7 @@ attach_main(int noerror)
+ 				if (!quiet_flag)
+ 					printf(EOS "\r\n[EOF - dtach terminating]"
+ 					       "\r\n");
+-				exit(0);
++				exit((int)exitcode);
+ 			}
+ 			else if (len < 0)
+ 			{
+@@ -283,7 +284,15 @@ attach_main(int noerror)
+ 			}
+ 			/* Send the data to the terminal. */
+ 			if (len)
+-				write(1, buf, len);
++			{
++				if (len >= 2 && buf[len - 1] == 255)
++				{
++					write(1, buf, len-2);
++					exitcode = buf[len - 2];
++				}
++				else
++	 				write(1, buf, len);
++			}
+ 			n--;
+ 		}
+ 		/* stdin activity */
+diff --git a/dtach.h b/dtach.h
+index 3389be5..52fba9a 100644
+--- a/dtach.h
++++ b/dtach.h
+@@ -72,6 +72,8 @@
+ #include <sys/stat.h>
+ #include <sys/socket.h>
+ #include <sys/un.h>
++#include <sys/types.h>
++#include <sys/wait.h>
+ 
+ #ifndef S_ISREG
+ #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+diff --git a/master.c b/master.c
+index 52dbcf5..9668459 100644
+--- a/master.c
++++ b/master.c
+@@ -249,13 +249,24 @@ pty_activity(int s)
+ 	struct client *p;
+ 	fd_set readfds, writefds;
+ 	int highest_fd, nclients;
++	int status;
++	char exitcode[2] = {0, 255};
+ 
+ 	/* Read the pty activity */
+ 	len = read(the_pty.fd, buf, sizeof(buf));
+ 
+ 	/* Error -> die */
+ 	if (len <= 0)
++	{
++		waitpid(-1, &status, WNOHANG);
++		exitcode[0] = WEXITSTATUS(status);
++		for (p = clients; p; p = p->next )
++		{
++			write(p->fd, exitcode, sizeof(exitcode));
++		}
++
+ 		exit(1);
++	}
+ 
+ #ifdef BROKEN_MASTER
+ 	/* Get the current terminal settings. */
+-- 
+2.7.4
+

@@ -17,6 +17,7 @@ SRC_URI = "git://github.com/crigler/dtach.git \
 	file://Add-ability-to-run-a-client-with-from-a-non-interact.patch \
 	file://Handle-EOF-properly-on-client-without-a-terminal.patch \
 	file://dtach-fix-the-issue-of-the-socket-file-existed-for-N-opt.patch \
+	file://0001-dtach-return-the-exit-code-of-the-peer-command.patch \
 	"
 SRCREV = "7acac922770597f5da5df7b290078770d20dac32"
 
