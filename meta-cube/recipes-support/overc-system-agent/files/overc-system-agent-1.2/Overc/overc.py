@@ -62,22 +62,45 @@ class Overc(object):
         overlay_flag = 0
 	#By now only support "Pulsar" and "overc" Linux upgrading
         DIST = "Pulsar overc"
+	upgrade_s = []
+	os.system('rm -rf /etc/overc/upgrade.lock')
         for cn in containers:
             if self.container.is_active(cn, template):
 	        for dist in DIST.split():
 	            if dist in self.container.get_issue(cn, template).split():
                         print "Updating container %s" % cn
+
                         self._container_upgrade(cn, template, True, False, skip_del) #by now only rpm upgrade support
                         if self.retval is not 0:
                             print "*** Failed to upgrade container %s" % cn
                             print "*** Abort the system upgrade action"
-                            sys.exit(self.retval)
+			    print "rollback and reboot the system to the previous status"
+			    for c in upgrade_s:
+			        print "rollback container %s" % c
+			        self._container_rollback(c, None, 'dom0', True)
+
+                            self.message = "\nrebooting..."
+			    print self.message
+			    self.system_reboot()
                         else:
+			    upgrade_s.append(cn)
+			    os.system('echo %s >>/etc/overc/upgrade.lock' % cn)
                             if self.container.is_overlay(cn) > 0:
                                 overlay_flag = 1
                         break
 
         rc = self._host_upgrade(0, force)
+        if (rc == 2): #upgrade failed
+	    print "Error: upgrade essentil system failed."
+	    for c in upgrade_s:
+	        print "rollback container %s" % c
+		self._container_rollback(c, None, 'dom0', True)
+
+	    self.message += "\nrebooting..."
+	    print self.message
+	    self.system_reboot()
+
+        os.system('rm -rf /etc/overc/upgrade.lock')
 
         if ((overlay_flag == 1) and (skipscan == 0) and (rc == 1)):
 		cmd = "lxc-overlayscan %s/%s" % (SYSROOT, self.agency.next_rootfs)
@@ -87,7 +110,11 @@ class Overc(object):
         if ((rc == 1) and (reboot != 0)):
             self.message += "\nrebooting..."
             print self.message
-            os.system('reboot')
+            self.system_reboot()
+
+    def system_reboot(self):
+        self.agency.sync()
+        os.system('reboot')
 
     def system_rollback(self):
         containers = self.container.get_container(self.args.template)
@@ -107,11 +134,11 @@ class Overc(object):
                         break
 
 
-        self.host_rollback()
-        if need_reboot:
+        rc = self._host_rollback()
+        if need_reboot or rc:
             self.message += "\nrebooting..."
             print self.message
-            os.system('reboot')
+            self.system_reboot()
 
 
     def factory_reset(self):
@@ -124,7 +151,7 @@ class Overc(object):
         else:
             self.message += "\nrebooting..."
             print self.message
-            os.system('reboot')
+            self.system_reboot()
                         
     def _need_upgrade(self):
         self.host_update()
@@ -152,8 +179,10 @@ class Overc(object):
 
     def _host_upgrade(self, reboot, force):
         if self._need_upgrade() or force:
-            self.agency.do_upgrade()
+            rc = self.agency.do_upgrade()
             self.message = self.agency.message
+	    if not rc:
+	        return 2
         else:
             self.message = "There is no new system available to upgrade!"
 	    return 0
@@ -161,22 +190,26 @@ class Overc(object):
 	if reboot:
 	    self.message += "\nrebooting..."
 	    print self.message
-	    os.system('reboot')
+	    self.system_reboot()
 	return 1
 	         
     def host_rollback(self):
+        rc = self._host_rollback()
+        print self.message
+        if rc:
+            self.system_reboot()
+
+    def _host_rollback(self):
         if self.bakup_mode:
             self.message = "Error: You are running in the backup mode, cannot do rollback!"
             print self.message
             return
 
         print "host rollback"
-        r = self.agency.do_rollback()
+        rc = self.agency.do_rollback()
         self.message = self.agency.message
-        print self.message
-        if r:
-            os.system('reboot')
-        
+        return rc 
+ 
     def container_rollback(self):
         self._container_rollback(self.args.name, self.args.snapshot_name, self.args.template, False)
         sys.exit(self.retval)

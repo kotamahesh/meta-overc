@@ -123,10 +123,12 @@ function exec_cmd_container {
             are_pids_same_namespace "user" "1" "${lxc_init_pid}"
             [ $? -ne 1 ] && nsenter_opts="-U"
             nsenter ${nsenter_opts} -u -i -m -n -p -t ${lxc_init_pid} -- $@
+	    return $?
         else
 	    # if we can't find the init process, we hed to the host, since this
 	    # is a peer container
 	    do_essential_cmd lxc-attach -n ${cn_name} -- $@
+	    return $?
         fi
     fi
 }

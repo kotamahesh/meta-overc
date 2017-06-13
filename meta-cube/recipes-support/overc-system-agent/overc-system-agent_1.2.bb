@@ -9,7 +9,7 @@ SRC_URI = " \
 inherit distutils systemd
 
 SYSTEMD_PACKAGES = "${PN}"
-SYSTEMD_SERVICE_${PN} = "factory-reset.service"
+SYSTEMD_SERVICE_${PN} = "factory-reset.service upgrade_clean.service"
 
 RDEPENDS_${PN} = "\
 	btrfs-tools \
@@ -47,6 +47,7 @@ do_install() {
 	install -m644 ${S}/README* ${D}/opt/${BPN}/
 	install -m755 ${S}/overc ${D}/opt/${BPN}/
 	install -m755 ${S}/*.py ${D}/opt/${BPN}/
+	install -m755 ${S}/*.sh ${D}/opt/${BPN}/
 
 	install -m755 ${S}/test/*.sh ${D}/opt/${BPN}/test
 
@@ -56,6 +57,7 @@ do_install() {
         # systemd services
         install -d ${D}${systemd_unitdir}/system
         install -m 0644 ${S}/factory-reset.service ${D}${systemd_unitdir}/system/
+	install -m 0644 ${S}/upgrade_clean.service ${D}${systemd_unitdir}/system/
 
 }
 

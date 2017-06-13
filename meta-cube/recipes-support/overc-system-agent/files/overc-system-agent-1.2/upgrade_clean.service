@@ -1,0 +1,12 @@
+[Unit]
+Description=clean up the upgrading failed containers
+After=local-fs.target
+ConditionPathExists=/opt/overc/upgrade.lock
+
+[Service]
+Type=oneshot
+ExecStart=/opt/overc-system-agent/upgrade_clean.sh
+
+[Install]
+WantedBy=multi-user.target
+

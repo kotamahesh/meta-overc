@@ -111,7 +111,8 @@ function do_essential_cmd()
     local cmd=$@
 
     # the external utility cube-cmd takes care of this for us
-    cube-cmd ${cmd} | sed 's/\r//g'
+    cube-cmd ${cmd}
+    return $?
 }
 
 # Global variables
@@ -221,7 +222,8 @@ case "${cmd}" in
         ;;
     exec-cmd)
         [ -z "${container_name}" ] && echo "Error, please provide container name" && exit 1
-        exec_cmd_container ${container_name} $@
+        exec_cmd_container ${container_name} $@ 
+        exit $?
         ;;
     exec-lxc-cmd)
         [ "${container_type}" != "lxc" ] && echo "Error, can only be invoked with lxc container" && exit 1

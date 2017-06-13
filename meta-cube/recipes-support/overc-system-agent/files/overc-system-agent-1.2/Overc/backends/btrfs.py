@@ -97,6 +97,10 @@ class Btrfs(Utils):
         while subvol_stack:
             self._btrfs(subvol_stack.pop())
 
+    def sync(self):
+        os.system('/usr/bin/btrfs filesystem sync %s/' % CONTAINER_MOUNT)
+	os.system('/usr/bin/btrfs filesystem sync /')
+
     def clean_essential(self):
         self._mount_rootvolume()
         self._cleanup_subvol(SYSROOT, [FACTORY_SNAPSHOT, 'rootfs_bakup'])
@@ -309,7 +313,7 @@ class Btrfs(Utils):
              
     def do_upgrade(self):
             self._mount_rootvolume()
-            self._do_upgrade()
+            return self._do_upgrade()
 
     def do_rollback(self):
         if self.bakup_mode:
