@@ -7,10 +7,10 @@ function setup_cmd_pipe() {
 
 	if [ -z "${target_path}" ]; then
 	    CMD_PIPE="/opt/container/${target_container}/cmd-pipe"
-	    oldpipes="/opt/container/${target_container}/dcmd-output"
+	    oldpipes="/opt/container/${target_container}/cmd-output"
 	else
 	    CMD_PIPE="${target_path}/cmd-pipe"
-	    oldpipes="${target_path}/dcmd-output"
+	    oldpipes="${target_path}/cmd-output"
 	fi
 
 	# Cleanup any old pipes
