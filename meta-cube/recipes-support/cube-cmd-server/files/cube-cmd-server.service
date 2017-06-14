@@ -1,6 +1,7 @@
 [Unit]
 Description=Cube command server
 After=local-fs.target
+Before=lxc.service
 
 [Service]
 Type=simple

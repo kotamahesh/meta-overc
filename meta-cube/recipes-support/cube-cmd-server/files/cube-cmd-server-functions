@@ -16,6 +16,9 @@ function setup_cmd_pipe() {
 	# Cleanup any old pipes
 	rm -f ${CMD_PIPE} $oldpipes
 
+	# Make directory if needed
+	mkdir -p $(dirname ${CMD_PIPE})
+
 	# Make sure the command fifo exists
 	mkfifo ${CMD_PIPE} >/dev/null 2>&1
 	if [ ! -p ${CMD_PIPE} ]; then

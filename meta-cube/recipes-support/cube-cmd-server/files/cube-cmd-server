@@ -271,6 +271,9 @@ if [ $? -eq 1 ]; then
     monitor_container=`eval echo ${monitor}`
 else
     monitor_container="${host_monitor[@]}"
+    if [ ! -d /opt/container/all ] ; then
+	mkdir -p /opt/container/all
+    fi
 fi
 
 if [ -z "${monitor_container}" ];then
