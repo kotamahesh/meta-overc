@@ -50,6 +50,7 @@ class network_prime
   file { '30-wired.network':
     path => "/var/lib/lxc/$container/rootfs/etc/systemd/network/30-wired.network",
     content => "[Match]\nName=$network_device\n\n[Network]\nDHCP=ipv4\nIPForward=ipv4\n",
+    replace => false,
     before => Exec['check_networkdevice'],
   }
 
