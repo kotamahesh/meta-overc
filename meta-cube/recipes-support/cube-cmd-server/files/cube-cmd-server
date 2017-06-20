@@ -1,4 +1,5 @@
 #!/bin/bash
+cmd_server_pid=$$
 
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License version 2 as
@@ -327,14 +328,22 @@ mkfifo ${consolidated_pipe}
 
 # this makes the pipes unbuffered and redirected to the conslidated pipe
 tail -f ${input_stream} | awk "{print \$0 > \"${consolidated_pipe}\"; close(\"${consolidated_pipe}\"); fflush();}" &
-sleep 1
 
 # We need to prime the pipes
 for s in ${input_stream}; do
     echo -n > ${s}
 done
 
+# up to 1 second sleep for the pipe
+for e in 0 1 2 3 4 5 6 7 8 9; do
+    if [ -e ${consolidated_pipe} ] ; then
+	break;
+    fi
+    sleep 0.1
+done
+
 output_and_log_msg "[INFO]: setup completed, waiting on commands from ${input_stream}"
+systemd-notify --ready --pid=$cmd_server_pid
 
 while (true) do
         read line

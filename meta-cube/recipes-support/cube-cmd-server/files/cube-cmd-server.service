@@ -4,7 +4,7 @@ After=local-fs.target
 Before=lxc.service
 
 [Service]
-Type=simple
+Type=notify
 ExecStart=/sbin/cube-cmd-server -l /var/log/cube-cmd-server.log
 ExecStop=/bin/true
 Restart=always
