@@ -25,6 +25,11 @@ kill %
 You can also restrict the Rest API server to the local host with:
 ./run_server.py -b 127.0.0.1
 
+It is also possible, but not recommended to turn off authentication:
+nohup ./run_server.py --DANGER-NO-AUTH &
+wget http://0.0.0.0:5555/container/list?template=dom0 -O -
+kill %
+
 
 Note, in the json responses, '\n' has been replaced to ';'.
 

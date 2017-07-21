@@ -22,6 +22,7 @@ app = Flask(__name__)
 app.config['ADMIN_USERNAME'] = 'adm'
 app.config['ADMIN_PW_HASH'] = '$pbkdf2-sha256$29000$i3EOIeT8P8dY6703BgBgbA$XyesHZZmu.O54HfiwIhSd00rMJpyCKhH0gsh1atxgqA'
 app.config['PW_FILE'] = "/opt/overc-system-agent/pwfile"
+app.config['NO_AUTH'] = False
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"])
 
@@ -30,6 +31,8 @@ auth = HTTPBasicAuth()
 
 @auth.verify_password
 def verify_password(username, password):
+    if app.config['NO_AUTH']:
+        return True
     if username != app.config['ADMIN_USERNAME']:
         return False
     if pwd_context.verify(password, app.config['ADMIN_PW_HASH']):
@@ -317,10 +320,10 @@ def container_delete_snapshots():
 if __name__ == '__main__':
     default_port = 5555
     bindaddr = '0.0.0.0'
-    help_txt = ' [-d] [-p <port>] [-b <bind address>]'
+    help_txt = ' [-d] [--DANGER-NO-AUTH] [-p <port>] [-b <bind address>]'
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"b:hdp::",["port="])
+        opts, args = getopt.getopt(sys.argv[1:],"b:hdp::",["port=","bind-addr=","DANGER-NO-AUTH"])
     except getopt.GetoptError:
         print sys.argv[0], help_txt
         sys.exit(2)
@@ -338,6 +341,8 @@ if __name__ == '__main__':
             bindaddr = arg
         elif opt == '-d':
             app.debug = True
+        elif opt == '--DANGER-NO-AUTH':
+            app.config['NO_AUTH'] = True
     if os.path.exists(app.config['PW_FILE']):
         pwfile = open(app.config['PW_FILE'],'r')
         user_pw = pwfile.read()
