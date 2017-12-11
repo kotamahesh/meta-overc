@@ -66,7 +66,7 @@ class Overc(object):
                     if dist in self.container.get_issue(cn, template).split():
                         log.info("Updating container %s" % cn)
                         self._container_upgrade(cn, template, True, False, skip_del) #by now only rpm upgrade support
-                        if self.retval != 0:
+                        if self.retval is not 0:
                             log.error("*** Failed to upgrade container %s" % cn)
                             log.error("*** Abort the system upgrade action")
                             break
@@ -75,30 +75,23 @@ class Overc(object):
                             if self.container.is_overlay(cn) > 0:
                                 overlay_flag = 1
                         break
-            if self.retval != 0:
+            if self.retval is not 0:
                 break
 
-        if self.retval != 0:
+        if self.retval is not 0:
             for cn in succeeded:
                 self._container_rollback(cn, None, template, True)
-            log.info("rebooting...")
-            os.system('reboot')
+            sys.exit(self.retval)
 
         rc = self._host_upgrade(0, force)
 
-        if not rc:
-            for cn in succeeded:
-                self._container_rollback(cn, None, template, True)
-            log.info("rebooting...")
-            os.system('reboot')
-
-        if (overlay_flag == 1) and (skipscan == 0):
+        if ((overlay_flag == 1) and (skipscan == 0) and (rc == 1)):
             # Enable lxc-overlay service in essential by create a flagfile in CONTAINER_MOUNT
             lxcfile = '%s/need_scan_duplicate' % (CONTAINER_MOUNT)
             lxc = open(lxcfile, 'w+')
             lxc.close()
 
-        if reboot != 0:
+        if ((rc == 1) and (reboot != 0)):
             log.info("rebooting...")
             os.system('reboot')
 
